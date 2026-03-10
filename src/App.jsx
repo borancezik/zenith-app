@@ -1,8 +1,22 @@
 import { useTheme } from "./context/ThemeContext";
-import { Terminal, Moon, Sun, Monitor } from "lucide-react";
+import { Terminal, Moon, Sun, Monitor, Upload } from "lucide-react";
 import { cn } from "./lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useLoadProto } from "./hooks/useProto";
+import Workspace from "./components/Workspace";
 
 function App() {
+  const { data: activeProto } = useQuery({ queryKey: ["activeProto"] });
+  const loadProto = useLoadProto();
+
+  if (activeProto) {
+    return <Workspace data={activeProto} />;
+  }
+
+  return <WelcomeScreen onLoad={() => loadProto.mutate()} isLoading={loadProto.isPending} />;
+}
+
+function WelcomeScreen({ onLoad, isLoading }) {
   const { theme, setTheme } = useTheme();
 
   const themes = [
@@ -13,14 +27,9 @@ function App() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-background text-foreground transition-colors duration-300">
-      
-      {/* Neo-brutalist / Glassmorphism Container */}
       <div className="w-full max-w-3xl relative">
-        {/* Subtle glow behind the card */}
         <div className="absolute inset-0 bg-accent-glow rounded-3xl blur-3xl opacity-50 pointer-events-none" />
-        
         <div className="relative bg-card border border-border shadow-2xl rounded-2xl p-8 backdrop-blur-sm overflow-hidden flex flex-col items-center justify-center space-y-8">
-          
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-accent to-transparent opacity-50" />
 
           {/* Header */}
@@ -60,26 +69,34 @@ function App() {
             </div>
           </div>
 
-          {/* Preview Element */}
-          <div className="w-full p-4 rounded-lg bg-background/50 border border-border flex items-center justify-between mt-8">
-             <div className="flex flex-col">
-               <span className="text-xs text-foreground/50 font-mono">Status</span>
-               <span className="text-sm text-accent font-semibold flex items-center gap-2">
-                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-                  </span>
-                 Sistem Hazır
-               </span>
+          {/* Load Workspace Button */}
+          <div className="w-full p-4 rounded-lg bg-background/50 border border-border mt-8 flex flex-col items-center space-y-4">
+             <div className="flex flex-col text-center">
+               <span className="text-sm font-medium text-foreground pb-2">Hemen Başlayın</span>
+               <span className="text-xs text-foreground/50">Test etmek istediğiniz .proto dosyasını yükleyin</span>
              </div>
-             <button className="px-4 py-2 rounded bg-foreground text-background font-bold text-sm hover:opacity-90 transition-opacity">
-               Başlat
+             
+             <button 
+               onClick={onLoad} 
+               disabled={isLoading}
+               className="px-6 py-3 w-full sm:w-auto rounded-lg bg-foreground text-background font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 subtle-glow"
+             >
+               {isLoading ? (
+                 <>
+                   <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-background"></span>
+                   Yükleniyor...
+                 </>
+               ) : (
+                 <>
+                   <Upload className="w-4 h-4" />
+                   .proto Yükle
+                 </>
+               )}
              </button>
           </div>
 
         </div>
       </div>
-      
     </div>
   );
 }
